@@ -44,7 +44,7 @@ func First(collection *mgm.Collection, object mgm.Model, filter bson.M) error {
 	return collection.First(filter, object)
 }
 
-func Update(collection *mgm.Collection, object mgm.Model) error {
+func Replace(collection *mgm.Collection, object mgm.Model) error {
 	return collection.Update(object)
 }
 
