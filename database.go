@@ -11,24 +11,15 @@ import (
 var initialisationTriesCount = 1
 var maxInitialisationTries = 6
 
-func InitialiseDatabase(params struct {
-	dbName      string
-	mongoConfig *mgm.Config
-	mongoURI    string
-}) {
-	var config *mgm.Config = nil
-	if params.mongoConfig != nil {
-		config = params.mongoConfig
-	}
-
+func InitialiseDatabase(dbName string, mongoURI string) {
 	err := mgm.SetDefaultConfig(
-		config,
-		"development",
-		options.Client().ApplyURI(params.mongoURI),
+		nil,
+		dbName,
+		options.Client().ApplyURI(mongoURI),
 	)
 	if err != nil && initialisationTriesCount <= maxInitialisationTries {
 		initialisationTriesCount++
-		InitialiseDatabase(params)
+		InitialiseDatabase(dbName, mongoURI)
 		return
 	} else if err != nil {
 		log.Println("MongoDB connection timed out!")
