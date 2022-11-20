@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/kamva/mgm/v3"
+	"github.com/xorcare/pointer"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -58,55 +59,51 @@ func FindByID(id string, collection *mgm.Collection, obj mgm.Model) error {
 	return collection.FindByID(id, obj)
 }
 
-func AddIndex(collection *mgm.Collection, config struct {
-	field     string
-	ascending bool
-	unique    bool
-}) (string, error) {
+type IndexKey struct {
+	Field     string
+	Ascending bool
+	Unique    bool
+}
+
+func AddIndex(collection *mgm.Collection, config IndexKey) (string, error) {
 	ctx := mgm.Ctx()
 	var sort int32 = 1
-	if !config.ascending {
+	if !config.Ascending {
 		sort = -1
 	}
 	index := mongo.IndexModel{
 		Keys: bsonx.Doc{{
-			Key:   config.field,
+			Key:   config.Field,
 			Value: bsonx.Int32(sort),
 		}},
+		Options: options.Index(),
 	}
-	if config.unique {
-		t := true
-		index.Options.Unique = &t
+	if config.Unique {
+		index.Options.Unique = pointer.Bool(true)
 	}
 
 	return collection.Indexes().CreateOne(ctx, index)
 }
 
-func AddIndexes(collection *mgm.Collection, config struct {
-	fields []struct {
-		field     string
-		ascending bool
-		unique    bool
-	}
-}) ([]string, error) {
+func AddIndexes(collection *mgm.Collection, fields []IndexKey) ([]string, error) {
 	ctx := mgm.Ctx()
 
 	indexes := []mongo.IndexModel{}
-	for _, conf := range config.fields {
+	for _, conf := range fields {
 		var sort int32 = 1
-		if !conf.ascending {
+		if !conf.Ascending {
 			sort = -1
 		}
 
 		index := mongo.IndexModel{
 			Keys: bsonx.Doc{{
-				Key:   conf.field,
+				Key:   conf.Field,
 				Value: bsonx.Int32(sort),
 			}},
+			Options: options.Index(),
 		}
-		if conf.unique {
-			t := true
-			index.Options.Unique = &t
+		if conf.Unique {
+			index.Options.Unique = pointer.Bool(true)
 		}
 
 		indexes = append(indexes, index)
