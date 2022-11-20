@@ -5,7 +5,9 @@ import (
 
 	"github.com/kamva/mgm/v3"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/x/bsonx"
 )
 
 var initialisationTriesCount = 1
@@ -54,4 +56,61 @@ func Delete(collection *mgm.Collection, object mgm.Model) error {
 
 func FindByID(id string, collection *mgm.Collection, obj mgm.Model) error {
 	return collection.FindByID(id, obj)
+}
+
+func AddIndex(collection *mgm.Collection, config struct {
+	field     string
+	ascending bool
+	unique    bool
+}) (string, error) {
+	ctx := mgm.Ctx()
+	var sort int32 = 1
+	if !config.ascending {
+		sort = -1
+	}
+	index := mongo.IndexModel{
+		Keys: bsonx.Doc{{
+			Key:   config.field,
+			Value: bsonx.Int32(sort),
+		}},
+	}
+	if config.unique {
+		t := true
+		index.Options.Unique = &t
+	}
+
+	return collection.Indexes().CreateOne(ctx, index)
+}
+
+func AddIndexes(collection *mgm.Collection, config struct {
+	fields []struct {
+		field     string
+		ascending bool
+		unique    bool
+	}
+}) ([]string, error) {
+	ctx := mgm.Ctx()
+
+	indexes := []mongo.IndexModel{}
+	for _, conf := range config.fields {
+		var sort int32 = 1
+		if !conf.ascending {
+			sort = -1
+		}
+
+		index := mongo.IndexModel{
+			Keys: bsonx.Doc{{
+				Key:   conf.field,
+				Value: bsonx.Int32(sort),
+			}},
+		}
+		if conf.unique {
+			t := true
+			index.Options.Unique = &t
+		}
+
+		indexes = append(indexes, index)
+	}
+
+	return collection.Indexes().CreateMany(ctx, indexes)
 }
