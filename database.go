@@ -39,8 +39,8 @@ func InsertOne(collection *mgm.Collection, object mgm.Model) error {
 	return collection.Create(object)
 }
 
-func Find(collection *mgm.Collection, result interface{}, filter bson.M) error {
-	return collection.SimpleFind(result, filter)
+func Find(collection *mgm.Collection, result interface{}, filter bson.M, findOptions *options.FindOptions) error {
+	return collection.SimpleFind(result, filter, findOptions)
 }
 
 func First(collection *mgm.Collection, object mgm.Model, filter bson.M) error {
